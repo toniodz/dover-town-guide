@@ -1,0 +1,53 @@
+---
+import Base from '../layouts/Base.astro';
+---
+<Base title="Saved" description="Businesses you have saved on this device." nav="saved" noindex>
+  <div class="wrap" style="padding-top:40px">
+    <h1 class="display page-title" style="margin-bottom:20px">★ Saved</h1>
+    <div id="saved-list" hidden>
+      <p class="mono" id="saved-count" style="padding-bottom:12px;border-bottom:3px solid var(--ink)"></p>
+      <div id="saved-rows"></div>
+    </div>
+    <div id="saved-empty" class="note" style="max-width:520px">
+      <strong>Nothing saved yet.</strong><br />Tap ☆ Save on any business to keep it here. Saved places stay on this device.
+      <p style="margin-top:14px"><a class="btn" href="/">Browse the directory →</a></p>
+    </div>
+  </div>
+</Base>
+
+<script>
+  import { getSaved, setSaved } from '../scripts/saved';
+  const list = document.getElementById('saved-list')!;
+  const empty = document.getElementById('saved-empty')!;
+  const rows = document.getElementById('saved-rows')!;
+  const count = document.getElementById('saved-count')!;
+
+  type Row = [string, string, string, string, number, string];
+  const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
+
+  async function render() {
+    const saved = getSaved();
+    list.hidden = !saved.length;
+    empty.hidden = saved.length > 0;
+    if (!saved.length) return;
+    const index: Row[] = await (await fetch('/search-index.json')).json();
+    const bySlug = new Map(index.map((r) => [r[0], r]));
+    const found = saved.map((s) => bySlug.get(s)).filter(Boolean) as Row[];
+    count.textContent = `${found.length} SAVED ON THIS DEVICE`;
+    rows.innerHTML = found
+      .map(
+        (r) => `<div class="rel" style="align-items:center">
+          <a href="/business/${r[0]}/" style="text-decoration:none;flex:1"><span class="t">${esc(r[1])}</span><br><span class="mono">${esc(r[2])} · ${esc(r[3])}</span></a>
+          <button type="button" data-slug="${r[0]}" aria-label="Remove ${esc(r[1])}" style="border:2px solid var(--ink);background:none;min-width:44px;min-height:44px;font-weight:800;cursor:pointer">✕</button>
+        </div>`,
+      )
+      .join('');
+  }
+  rows.addEventListener('click', (e) => {
+    const slug = (e.target as HTMLElement).closest<HTMLElement>('button[data-slug]')?.dataset.slug;
+    if (!slug) return;
+    setSaved(getSaved().filter((s) => s !== slug));
+    render();
+  });
+  render();
+</script>

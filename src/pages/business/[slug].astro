@@ -75,6 +75,7 @@ const none = 'color:#777;font-weight:500';
         </div>
         {b.fax && <div class="cell full"><div class="lab">Fax</div><div class="val">{b.fax}</div></div>}
         {!closed && <a class="btn block full last" href={mapsUrl(b)} rel="noopener">Directions →</a>}
+        <button class="btn block full" type="button" id="save-btn" data-slug={b.slug} style="cursor:pointer;background:none;color:var(--ink);border-top:3px solid var(--ink)">☆ Save</button>
       </div>
     </div>
 
@@ -115,3 +116,16 @@ const none = 'color:#777;font-weight:500';
     )}
   </div>
 </Base>
+
+<script>
+  import { getSaved, setSaved } from '../../scripts/saved';
+  const btn = document.getElementById('save-btn') as HTMLButtonElement;
+  const slug = btn.dataset.slug!;
+  const paint = () => { btn.textContent = getSaved().includes(slug) ? '★ Saved' : '☆ Save'; };
+  btn.addEventListener('click', () => {
+    const s = getSaved();
+    setSaved(s.includes(slug) ? s.filter((x) => x !== slug) : [...s, slug]);
+    paint();
+  });
+  paint();
+</script>
