@@ -1,0 +1,18 @@
+---
+import Thumb from './Thumb.astro';
+import { shortAddress, catById } from '../lib/data';
+const { b, showCat = false } = Astro.props;
+const closed = b.status === 'closed';
+---
+<a class:list={['row', closed && 'is-closed']} href={`/business/${b.slug}/`} data-sub={b.subcategory}>
+  <Thumb id={b.id} name={b.name} w={140} h={96} />
+  <div>
+    <div class="t">{b.name}{closed && <span class="badge">Closed</span>}</div>
+    <div class="b">{b.services || b.subcategory}</div>
+  </div>
+  <div class="w">
+    <strong>{showCat ? (catById.get(b.category)?.short ?? '') : shortAddress(b)}</strong>
+    <span class="mono">{b.phone || b.subcategory}</span>
+  </div>
+  <span class="go" aria-hidden="true">→</span>
+</a>

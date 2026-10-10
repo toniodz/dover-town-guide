@@ -1,0 +1,40 @@
+---
+import Base from '../layouts/Base.astro';
+import { businesses, catById, letters } from '../lib/data';
+
+const groups = new Map<string, typeof businesses>();
+for (const l of letters) groups.set(l, []);
+for (const b of businesses) groups.get(b.letter)!.push(b);
+const anchor = (l: string) => (l === '#' ? 'num' : l);
+---
+<Base title="A–Z" description="Every business in the Dover Town & District Guide, A to Z." nav="a-z">
+  <div class="wrap" style="padding-top:40px">
+    <h1 class="display page-title" style="margin-bottom:20px">A–Z</h1>
+    <nav class="azgrid" aria-label="Jump to letter">
+      {letters.map((l) =>
+        groups.get(l)!.length
+          ? <a href={`#${anchor(l)}`} aria-label={`${l}, ${groups.get(l)!.length} businesses`}>{l}</a>
+          : <span aria-hidden="true">{l}</span>,
+      )}
+    </nav>
+    <label class="toggle"><input type="checkbox" id="hide-closed" /> Hide closed businesses</label>
+    {letters.filter((l) => groups.get(l)!.length).map((l) => (
+      <section class="az-sec" id={anchor(l)}>
+        <h2>{l}</h2>
+        {groups.get(l)!.map((b) => (
+          <a class:list={['arow', b.status === 'closed' && 'is-closed']} href={`/business/${b.slug}/`}>
+            <span class="t">{b.name}{b.status === 'closed' && <span class="badge">Closed</span>}</span>
+            <span class="cat">{catById.get(b.category)?.short} · {b.subcategory}</span>
+            <span class="mono ph">{b.phone}</span>
+            <span class="go" aria-hidden="true">→</span>
+          </a>
+        ))}
+      </section>
+    ))}
+  </div>
+</Base>
+
+<script>
+  const box = document.getElementById('hide-closed') as HTMLInputElement;
+  box.addEventListener('change', () => document.body.classList.toggle('hide-closed', box.checked));
+</script>

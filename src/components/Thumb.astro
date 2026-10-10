@@ -1,0 +1,9 @@
+---
+import { Image } from 'astro:assets';
+import { imageFor } from '../lib/data';
+const { id, name, w, h, class: cls = '' } = Astro.props;
+const img = imageFor(id);
+---
+{img
+  ? <div class:list={['thumb', cls]} style={`width:${w}px;height:${h}px`}><Image src={img} alt="" width={w * 2} height={h * 2} fit="cover" loading="lazy" decoding="async" /></div>
+  : <div class:list={['thumb empty', cls]} style={`width:${w}px;height:${h}px`} aria-hidden="true">{name.replace(/^the\s+/i, '')[0]}</div>}

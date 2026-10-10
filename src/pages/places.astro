@@ -1,0 +1,58 @@
+---
+import Base from '../layouts/Base.astro';
+import { byId } from '../lib/data';
+
+// Content carried over from the old Attractions page. `biz` links to the directory listing where there is one.
+const places = [
+  { name: 'Dover Castle', kind: 'Castle', biz: 498, where: 'Castle Hill, CT16 1HU', blurb: 'Spectacular views across the Channel to France, the “secret” WWII tunnels and the Henry II experience in the Great Tower.' },
+  { name: 'Dover Museum', kind: 'Museum', biz: 359, where: 'Market Square, CT16 1LZ', blurb: 'Home of the Bronze Age Boat, dating from about 1,000 BC. The other galleries follow Dover’s history through the ages, including the two World Wars.' },
+  { name: 'Roman Painted House', kind: 'Museum', biz: 764, where: 'New Street, CT17 9AJ', blurb: 'The best preserved Roman house in South East England, with outstanding wall paintings and original underfloor heating.' },
+  { name: 'Dover Transport Museum', kind: 'Museum', biz: 38, where: 'Willingdon Road, Whitfield, CT16 2HQ', blurb: 'More than 50 vehicles, from bicycles to buses, supported by street scenes. Tel: 01304 822409.' },
+  { name: 'Crabble Corn Mill', kind: 'Heritage', where: 'Lower Road, River, CT17 0UY', blurb: 'A Georgian water mill, regularly shown working, with a riverside tearoom serving meals made with home-baked mill flour. Tel: 01304 823292.' },
+  { name: 'De Bradelei Wharf', kind: 'Shopping', biz: 105, where: 'Cambridge Road, CT17 9BY', blurb: 'Brand-name fashion and furnishings between the marina and the seafront, with a coffee shop.' },
+  { name: 'White Cliffs Boat Tours', kind: 'Boat trip', biz: 267, where: 'The Clock Tower, Dover Marina, Western Docks', blurb: 'See the White Cliffs, Dover Castle and visiting cruise ships from the 70-seater Southern Queen. Trips last about 40 minutes. Tel: 01303 271388.' },
+  { name: 'Dover Sea Safari', kind: 'Boat trip', biz: 527, where: 'Dover Water Sports Centre', blurb: 'A coastal tour by RIB speedboat.' },
+  { name: 'Seafront & promenade', kind: 'Outdoors', where: 'Dover seafront', blurb: 'Stroll the promenade, walk to the end of the pier, or watch windsurfers, sailors and fishermen on the water.' },
+  { name: 'Cruise terminal & shuttle bus', kind: 'Travel', where: 'Western Docks', blurb: 'A shuttle bus runs into town on all Port of Call dates.' },
+];
+const maps = (p: (typeof places)[number]) => 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(`${p.name}, ${p.where}, Dover`);
+---
+<Base title="Places & map" description="Castle, museums, boat trips and a map of Dover town centre." nav="places">
+  <div class="wrap" style="padding-top:40px">
+    <h1 class="display page-title" style="margin-bottom:20px">Places &amp; map</h1>
+    <div class="places-grid">
+      <div class="places-list" id="places">
+        {places.map((p, i) => {
+          const biz = p.biz ? byId.get(p.biz) : undefined;
+          return (
+            <button class:list={['place', i === 0 && 'active']} type="button" aria-expanded={i === 0 ? 'true' : 'false'}>
+              <span class="n">{i + 1}</span>
+              <span class="t">{p.name}</span>
+              <span class="k">{p.kind}</span>
+              <span class="body">
+                {p.blurb}<br />
+                <span class="mono">{p.where}</span><br />
+                <a href={maps(p)} rel="noopener">Open in maps →</a>
+                {biz && <> · <a href={`/business/${biz.slug}/`}>Directory listing →</a></>}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+      <div class="map-side">
+        <img src="/img/town-centre-map.jpg" width="760" height="466" alt="Illustrated map of Dover town centre, from the marina on the left to the High Street on the right" />
+        <p class="mono">TOWN CENTRE MAP</p>
+      </div>
+    </div>
+  </div>
+</Base>
+
+<script>
+  const items = document.querySelectorAll<HTMLButtonElement>('#places .place');
+  items.forEach((el) =>
+    el.addEventListener('click', (e) => {
+      if ((e.target as HTMLElement).closest('a')) return;
+      items.forEach((o) => { o.classList.toggle('active', o === el); o.setAttribute('aria-expanded', String(o === el)); });
+    }),
+  );
+</script>

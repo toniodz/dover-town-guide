@@ -1,0 +1,40 @@
+---
+import Base from '../layouts/Base.astro';
+import { categories } from '../data/categories';
+import { site } from '../data/site';
+const choices = categories.filter((c) => c.id !== 'history');
+const ready = Boolean(site.formEndpoint);
+---
+<Base title="List your business" description="Add your Dover business to the town guide." nav="">
+  <div class="wrap" style="padding-top:40px">
+    <h1 class="display page-title">List your<br />business</h1>
+    <p style="margin-top:20px;font-size:19px;max-width:560px">A basic listing is free for any business in Dover and district. Tell us a little about yours and we’ll be in touch.</p>
+    <form class="form" id="add-form" method="post" action={site.formEndpoint || undefined}>
+      <label>Business name<input name="business" required autocomplete="organization" /></label>
+      <label>Category
+        <select name="category">
+          {choices.map((c) => <option>{c.name}</option>)}
+        </select>
+      </label>
+      <label>Address<textarea name="address" autocomplete="street-address"></textarea></label>
+      <label>Phone<input name="phone" type="tel" autocomplete="tel" /></label>
+      <label>Website<input name="website" type="url" placeholder="https://" /></label>
+      <label>Your email<span class="hint">So we can confirm the listing with you.</span><input name="email" type="email" required autocomplete="email" /></label>
+      <button class="btn" type="submit" disabled={!ready}>Send →</button>
+      {!ready && import.meta.env.DEV && <p class="hint">Dev note: set PUBLIC_FORM_ENDPOINT in .env to enable this form.</p>}
+      {!ready && !import.meta.env.DEV && site.contactEmail && <p class="hint">Or email <a href={`mailto:${site.contactEmail}`}>{site.contactEmail}</a>.</p>}
+    </form>
+    <p class="sent" id="sent" hidden role="status">Thanks. We’ll be in touch.</p>
+  </div>
+</Base>
+
+<script>
+  const form = document.getElementById('add-form') as HTMLFormElement;
+  const sent = document.getElementById('sent')!;
+  form.addEventListener('submit', async (e) => {
+    if (!form.action || form.action === location.href) return;
+    e.preventDefault();
+    const res = await fetch(form.action, { method: 'POST', body: new FormData(form), headers: { Accept: 'application/json' } });
+    if (res.ok) { form.hidden = true; sent.hidden = false; } else { alert('Sorry, that did not send. Please try again.'); }
+  });
+</script>

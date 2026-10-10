@@ -1,0 +1,44 @@
+[
+  {
+    "id": 714,
+    "name": "Walk & Talk",
+    "assigned": "services / Other",
+    "services": ""
+  },
+  {
+    "id": 821,
+    "name": "Pampered Poouch",
+    "assigned": "services / Pet Services",
+    "services": ""
+  },
+  {
+    "id": 829,
+    "name": "Honey Bees",
+    "assigned": "shops / Other",
+    "services": ""
+  },
+  {
+    "id": 848,
+    "name": "Rhino & Bulls",
+    "assigned": "eat / Bars",
+    "services": ""
+  },
+  {
+    "id": 890,
+    "name": "SunShine Co",
+    "assigned": "shops / Other",
+    "services": ""
+  },
+  {
+    "id": 930,
+    "name": "Allsorts N Stuff",
+    "assigned": "shops / Other",
+    "services": ""
+  },
+  {
+    "id": 948,
+    "name": "Dave's Cave King Street",
+    "assigned": "shops / Other",
+    "services": ""
+  }
+]

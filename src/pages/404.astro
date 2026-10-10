@@ -1,0 +1,13 @@
+---
+import Base from '../layouts/Base.astro';
+---
+<Base title="Page not found" noindex>
+  <div class="wrap" style="padding-top:60px">
+    <h1 class="display page-title">Not found</h1>
+    <p style="margin-top:20px;font-size:20px;max-width:520px">That page has moved or never existed. Try the <a href="/">directory</a>, the <a href="/a-z/">A–Z</a> or search.</p>
+    <form class="big-search" action="/search/" method="get" role="search" style="margin-top:28px;max-width:640px">
+      <input name="q" type="search" aria-label="Search the directory" placeholder="Search the directory" />
+      <button type="submit">Search</button>
+    </form>
+  </div>
+</Base>

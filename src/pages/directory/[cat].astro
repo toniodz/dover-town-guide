@@ -1,0 +1,60 @@
+---
+import Base from '../../layouts/Base.astro';
+import BizRow from '../../components/BizRow.astro';
+import { categories } from '../../data/categories';
+import { catById, inCategory } from '../../lib/data';
+
+export function getStaticPaths() {
+  return categories.map((c) => ({ params: { cat: c.id } }));
+}
+const cat = catById.get(Astro.params.cat!)!;
+const list = inCategory(cat.id);
+
+// Most common subcategories become filter chips
+const subCounts = new Map<string, number>();
+for (const b of list) subCounts.set(b.subcategory, (subCounts.get(b.subcategory) ?? 0) + 1);
+const chips = [...subCounts.entries()]
+  .filter(([s]) => s !== 'Other')
+  .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+  .slice(0, 14);
+---
+<Base title={cat.name} description={`${cat.blurb} ${list.length} listings in the Dover Town & District Guide.`} nav="directory">
+  <section class="cat-hero" style={`background:${cat.bg};color:${cat.fg}`}>
+    <div class="inner">
+      <a class="mono" href="/" style={`color:${cat.fg}`}>← DIRECTORY / {String(cat.index + 1).padStart(2, '0')}</a>
+      <h1 class="display page-title">{cat.short}</h1>
+      <p>{cat.blurb}</p>
+    </div>
+  </section>
+  <div class="wrap">
+    {chips.length > 1 && (
+      <div class="chips" id="chips" role="group" aria-label="Filter by type">
+        <span class="mono"><span id="count">{list.length}</span> LISTED · TYPE</span>
+        <button class="chip" type="button" data-sub="" aria-pressed="true">All</button>
+        {chips.map(([s, n]) => <button class="chip" type="button" data-sub={s} aria-pressed="false">{s} <span class="mono">{n}</span></button>)}
+      </div>
+    )}
+    <div class="rows" id="rows">
+      {list.map((b) => <BizRow b={b} />)}
+    </div>
+  </div>
+</Base>
+
+<script>
+  const chips = document.querySelectorAll<HTMLButtonElement>('#chips .chip');
+  const rows = document.querySelectorAll<HTMLElement>('#rows .row');
+  const count = document.getElementById('count');
+  chips.forEach((chip) =>
+    chip.addEventListener('click', () => {
+      const sub = chip.dataset.sub ?? '';
+      chips.forEach((c) => c.setAttribute('aria-pressed', String(c === chip)));
+      let n = 0;
+      rows.forEach((r) => {
+        const show = !sub || r.dataset.sub === sub;
+        r.hidden = !show;
+        if (show) n++;
+      });
+      if (count) count.textContent = String(n);
+    }),
+  );
+</script>

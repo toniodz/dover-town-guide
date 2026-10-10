@@ -1,0 +1,19 @@
+---
+import Base from '../layouts/Base.astro';
+import { eventSources } from '../data/events';
+---
+<Base title="What’s on" description="Where to find out what’s happening in and around Dover." nav="events">
+  <div class="wrap" style="padding-top:40px">
+    <h1 class="display page-title" style="margin-bottom:20px">What’s on</h1>
+    <div style="border-top:3px solid var(--ink)">
+      {eventSources.map((e) => (
+        <a class="srcrow" href={e.url} rel="noopener">
+          <div class="src-mark">{e.kind}</div>
+          <div><div class="t">{e.title}</div><div class="mono" style="margin-top:6px">{e.host}</div></div>
+          <span class="go" aria-hidden="true">→</span>
+        </a>
+      ))}
+    </div>
+    <p class="note">A dated what’s-on calendar for the town is on the way. Until then these are the best places to look.</p>
+  </div>
+</Base>

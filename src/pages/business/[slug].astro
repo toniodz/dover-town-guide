@@ -1,0 +1,117 @@
+---
+import { Image } from 'astro:assets';
+import Base from '../../layouts/Base.astro';
+import { businesses, catById, imageFor, predecessors, successor, addressLine, mapsUrl, openFirst } from '../../lib/data';
+
+export function getStaticPaths() {
+  return businesses.map((b) => ({ params: { slug: b.slug }, props: { b } }));
+}
+const { b } = Astro.props;
+const cat = catById.get(b.category)!;
+const img = imageFor(b.id);
+const closed = b.status === 'closed';
+const next = successor(b);
+const before = predecessors(b);
+const related = businesses
+  .filter((x) => x.id !== b.id && x.category === b.category && x.subcategory === b.subcategory)
+  .sort(openFirst)
+  .slice(0, 6);
+const addr = addressLine(b);
+const desc = [b.services, addr].filter(Boolean).join(' · ') || `${b.name} in Dover`;
+const ld = !closed && {
+  '@context': 'https://schema.org',
+  '@type': 'LocalBusiness',
+  name: b.name,
+  ...(b.phone && { telephone: b.phone }),
+  ...(b.website && { url: b.website }),
+  ...(b.email && { email: b.email }),
+  address: {
+    '@type': 'PostalAddress',
+    streetAddress: b.address.slice(0, 2).join(', '),
+    addressLocality: 'Dover',
+    addressCountry: 'GB',
+    ...(b.postcode && { postalCode: b.postcode }),
+  },
+};
+const none = 'color:#777;font-weight:500';
+---
+<Base title={b.name} description={`${b.name}${closed ? ' (closed)' : ''}. ${desc}`} nav="directory">
+  {ld && <script type="application/ld+json" slot="head" set:html={JSON.stringify(ld)} />}
+  <div class="wrap" style="padding-top:32px">
+    <a class="crumb" href={`/directory/${cat.id}/`}>← {cat.short.toUpperCase()}{b.subcategory !== 'Other' ? ` / ${b.subcategory.toUpperCase()}` : ''}</a>
+    <h1 class="display biz-title">{b.name}</h1>
+    {closed && <p style="margin:-8px 0 20px"><span class="badge warn" style="margin:0;font-size:14px;padding:4px 12px">Closed</span></p>}
+
+    <div class="biz-grid">
+      {img
+        ? <div class="biz-photo"><Image src={img} alt={b.name} width={img.width} height={img.height} loading="eager" /></div>
+        : <div class="biz-photo empty" aria-hidden="true">{b.sortName[0]}</div>}
+      <div class="facts">
+        {b.services && <div class="full lead">{b.services}</div>}
+        {closed && (
+          <div class="full notice">
+            CLOSED{next && <> · NOW AT THIS SITE: <a href={`/business/${next.slug}/`}>{next.name} →</a></>}
+          </div>
+        )}
+        <div class="cell">
+          <div class="lab">Address</div>
+          <div class="val">
+            {b.address.length || b.postcode
+              ? [...b.address, b.postcode].filter(Boolean).map((l) => <div>{l}</div>)
+              : <span style={none}>Not available</span>}
+          </div>
+        </div>
+        <div class="cell">
+          <div class="lab">Phone</div>
+          <div class="val">{b.phone ? <a href={`tel:${b.phone.replace(/[^\d+]/g, '')}`}>{b.phone}</a> : <span style={none}>Not available</span>}</div>
+        </div>
+        <div class="cell">
+          <div class="lab">Web</div>
+          <div class="val">{b.website ? <a href={b.website} rel="noopener">{b.websiteLabel}</a> : <span style={none}>Not available</span>}</div>
+        </div>
+        <div class="cell">
+          <div class="lab">Email</div>
+          <div class="val">{b.email ? <a href={`mailto:${b.email}`}>{b.email}</a> : <span style={none}>Not available</span>}</div>
+        </div>
+        {b.fax && <div class="cell full"><div class="lab">Fax</div><div class="val">{b.fax}</div></div>}
+        {!closed && <a class="btn block full last" href={mapsUrl(b)} rel="noopener">Directions →</a>}
+      </div>
+    </div>
+
+    {(b.heading || b.info || b.links.length > 0) && (
+      <div class="prose">
+        {b.heading && <h2>{b.heading}</h2>}
+        {b.info && <p>{b.info}</p>}
+        {b.links.length > 0 && <ul class="chain">{b.links.map((l) => <li><a href={l.url} rel="noopener">{l.label} →</a></li>)}</ul>}
+      </div>
+    )}
+
+    {before.length > 0 && (
+      <div class="prose">
+        <h2>Previously on this site</h2>
+        <ul class="chain">
+          {before.map((p) => <li><a href={`/business/${p.slug}/`}>{p.name}</a>{p.services && <span> · {p.services}</span>}</li>)}
+        </ul>
+      </div>
+    )}
+
+    {(b.memberHotelGroup || b.memberChamber) && (
+      <div class="members">
+        {b.memberHotelGroup && <img src="/img/logo-hotel-group.jpg" width="100" height="126" alt="White Cliffs Dover Hotel & Guest House Group" />}
+        {b.memberChamber && <img src="/img/logo-chamber.jpg" width="250" height="82" alt="Dover District Chamber of Commerce" />}
+      </div>
+    )}
+
+    {related.length > 0 && (
+      <>
+        <h2 class="sub-h">Also in {b.subcategory === 'Other' ? cat.short : b.subcategory}</h2>
+        {related.map((r) => (
+          <a class="rel" href={`/business/${r.slug}/`}>
+            <span class="t">{r.name}{r.status === 'closed' && <span class="badge">Closed</span>}</span>
+            <span>{r.address[0] ?? ''} →</span>
+          </a>
+        ))}
+      </>
+    )}
+  </div>
+</Base>

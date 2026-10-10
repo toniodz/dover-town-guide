@@ -1,0 +1,104 @@
+---
+import Base from '../layouts/Base.astro';
+import Thumb from '../components/Thumb.astro';
+import { categories, colourFor } from '../data/categories';
+import { eventSources } from '../data/events';
+import { businesses, byId, catById, shortAddress } from '../lib/data';
+
+const counts = new Map<string, number>();
+for (const b of businesses) counts.set(b.category, (counts.get(b.category) ?? 0) + 1);
+
+// Hand-picked local favourites (kept only if they are open and have a photo)
+const featuredIds = [206, 75, 359, 764, 498, 527, 267, 124];
+const featured = featuredIds.map((id) => byId.get(id)!).filter((b) => b && b.status === 'open' && b.hasImage).slice(0, 7);
+---
+<Base nav="directory">
+  <div class="wrap">
+    <section class="hero">
+      <div class="hero-copy">
+        <div class="mono">CT16 · CT17 · TOWN &amp; DISTRICT</div>
+        <h1 class="display">Welcome<br />to Dover</h1>
+        <p>Where to eat, stay and explore, plus the local trades and services that keep the town running.</p>
+      </div>
+      <div class="hero-photo">
+        <!-- TODO: replace with a larger photo (this one is only 353px wide) -->
+        <img src="/img/hero-dover-castle.jpg" alt="Dover Castle on the hill above the town" width="353" height="231" fetchpriority="high" />
+      </div>
+    </section>
+
+    <section class="search-band" aria-label="Search">
+      <form action="/search/" method="get" role="search" id="home-search">
+        <label for="q">Search the directory</label>
+        <div class="search-row">
+          <input id="q" name="q" type="search" placeholder="Try ‘bakery’, ‘B&B’ or ‘plumber’" autocomplete="off" />
+          <button type="submit">Go →</button>
+        </div>
+      </form>
+      <div class="suggest" id="suggest" hidden aria-live="polite"></div>
+    </section>
+
+    <section style="padding-top:56px" aria-labelledby="dir-h">
+      <h2 class="h2" id="dir-h">Directory</h2>
+      <div class="tiles">
+        {categories.map((c, i) => {
+          const col = colourFor(i);
+          return (
+            <a class="tile" href={`/directory/${c.id}/`} style={`background:${col.bg};color:${col.fg}`}>
+              <div class="top"><span>{String(i + 1).padStart(2, '0')}</span><span>{counts.get(c.id) ?? 0} listed</span></div>
+              <div class="name">{c.short}</div>
+            </a>
+          );
+        })}
+      </div>
+    </section>
+
+    <section class="pair">
+      <div>
+        <div class="rule-head"><h2 class="h2 sm">Local picks</h2><a class="more" href="/a-z/">A–Z →</a></div>
+        {featured.map((b) => (
+          <a class="pick" href={`/business/${b.slug}/`}>
+            <Thumb id={b.id} name={b.name} w={76} h={76} />
+            <div><div class="t">{b.name}</div><div class="s">{catById.get(b.category)?.short} · {shortAddress(b) || 'Dover'}</div></div>
+            <span class="go" aria-hidden="true">→</span>
+          </a>
+        ))}
+      </div>
+      <div>
+        <div class="rule-head"><h2 class="h2 sm">What’s on</h2><a class="more" href="/events/">All events →</a></div>
+        {eventSources.map((e) => (
+          <a class="pick" href={e.url} rel="noopener" style="grid-template-columns:76px minmax(0,1fr)">
+            <div class="src-mark">{e.kind}</div>
+            <div><div class="t">{e.title}</div><div class="s">{e.host}</div></div>
+          </a>
+        ))}
+      </div>
+    </section>
+
+    <section class="cta-band">
+      <div>
+        <h2 class="display">Your business here</h2>
+        <p>Free basic listing for any business in Dover and district.</p>
+      </div>
+      <div><a class="btn" href="/add/">Add your business →</a></div>
+    </section>
+  </div>
+</Base>
+
+<script>
+  import { search, esc } from '../scripts/search';
+  const input = document.getElementById('q') as HTMLInputElement;
+  const box = document.getElementById('suggest')!;
+  let timer: number;
+  input.addEventListener('input', () => {
+    clearTimeout(timer);
+    timer = window.setTimeout(async () => {
+      const q = input.value.trim();
+      if (q.length < 2) { box.hidden = true; return; }
+      const hits = (await search(q)).slice(0, 8);
+      box.hidden = false;
+      box.innerHTML = hits.length
+        ? hits.map((r) => `<a href="/business/${r[0]}/"><span class="name">${esc(r[1])}${r[4] ? ' <span class="badge">Closed</span>' : ''}</span><span class="meta">${esc(r[2])} / ${esc(r[3])}</span></a>`).join('')
+        : '<div class="empty">No matches. Pick a section below.</div>';
+    }, 120);
+  });
+</script>

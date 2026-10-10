@@ -1,0 +1,42 @@
+---
+import Base from '../layouts/Base.astro';
+---
+<Base title="Search" description="Search every business in the Dover Town & District Guide." nav="directory" noindex>
+  <div class="wrap" style="padding-top:40px">
+    <form class="big-search" action="/search/" method="get" role="search">
+      <label for="q" class="skip" style="position:static;left:auto;height:0;width:0;overflow:hidden;padding:0">Search the directory</label>
+      <input id="q" name="q" type="search" autocomplete="off" placeholder="Try ‘bakery’, ‘B&B’ or ‘plumber’" />
+      <button type="submit">Search</button>
+    </form>
+    <h1 class="h2" id="result-h" style="margin:32px 0 12px;border-bottom:3px solid var(--ink);padding-bottom:8px" aria-live="polite">Search</h1>
+    <div id="results"></div>
+  </div>
+</Base>
+
+<script>
+  import { search, esc } from '../scripts/search';
+  const input = document.getElementById('q') as HTMLInputElement;
+  const head = document.getElementById('result-h')!;
+  const out = document.getElementById('results')!;
+  const params = new URLSearchParams(location.search);
+  input.value = params.get('q') ?? '';
+
+  async function run() {
+    const q = input.value.trim();
+    if (!q) { head.textContent = 'Search'; out.innerHTML = ''; return; }
+    const hits = await search(q);
+    head.textContent = `${hits.length} result${hits.length === 1 ? '' : 's'}`;
+    out.innerHTML = hits.length
+      ? hits.map((r) => `<a class="arow${r[4] ? ' is-closed' : ''}" href="/business/${r[0]}/"><span class="t">${esc(r[1])}${r[4] ? '<span class="badge">Closed</span>' : ''}</span><span class="cat">${esc(r[2])} · ${esc(r[3])}</span><span></span><span class="go" aria-hidden="true">→</span></a>`).join('')
+      : `<p style="padding:20px 0">No matches for “${esc(q)}”. Try fewer words, or browse the <a href="/">directory</a> or <a href="/a-z/">A–Z</a>.</p>`;
+  }
+  let timer: number;
+  input.addEventListener('input', () => {
+    clearTimeout(timer);
+    timer = window.setTimeout(() => {
+      history.replaceState(null, '', input.value ? `?q=${encodeURIComponent(input.value)}` : location.pathname);
+      run();
+    }, 150);
+  });
+  run();
+</script>
